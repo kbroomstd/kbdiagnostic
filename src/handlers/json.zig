@@ -10,14 +10,8 @@ pub const JsonReportHandler = struct {
     base: report.ReportHandler = .{ .ptr = dummy_ptr, .vtable = &vtable },
 
     const vtable = report.ReportHandler.VTable{
-        .debug = debug,
         .display = display,
-        .trackCaller = trackCaller,
     };
-
-    fn debug(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try display(dummy_ptr, std.heap.smp_allocator, err, writer);
-    }
 
     fn escape(writer: *std.Io.Writer, s: []const u8) std.Io.Writer.Error!void {
         for (s) |c| switch (c) {
@@ -40,7 +34,7 @@ pub const JsonReportHandler = struct {
         };
     }
 
-    fn display(_: *const anyopaque, _: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    fn display(_: *const anyopaque, _: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
         try renderReport(writer, err, null);
         try writer.writeByte('\n');
     }
@@ -129,7 +123,6 @@ pub const JsonReportHandler = struct {
         try writer.writeAll("\"");
     }
 
-    fn trackCaller(_: *anyopaque, _: *const std.builtin.SourceLocation) void {}
 };
 
 test "json output" {
@@ -156,7 +149,7 @@ test "json output" {
     const handler = (JsonReportHandler{}).base;
     var buf: [128]u8 = undefined;
     var writer = std.Io.Writer.fixed(&buf);
-    try handler.display(&d, &writer);
+    try handler.display(std.testing.allocator, &writer, &d);
     try writer.flush();
     try std.testing.expect(std.mem.indexOf(u8, buf[0..writer.end], "\"message\": \"bad\"") != null);
 }

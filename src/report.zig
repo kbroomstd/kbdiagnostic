@@ -1,26 +1,15 @@
 const std = @import("std");
 const diag = @import("diagnostic.zig");
-const graphical = @import("handlers/graphical.zig");
-const json = @import("handlers/json.zig");
-const debug = @import("handlers/debug.zig");
 
 pub const ReportHandler = struct {
     ptr: *const anyopaque,
     vtable: *const VTable,
     pub const VTable = struct {
-        debug: *const fn (*const anyopaque, *const diag.Diagnostic, *std.Io.Writer) std.Io.Writer.Error!void,
-        display: *const fn (*const anyopaque, std.mem.Allocator, *const diag.Diagnostic, *std.Io.Writer) std.Io.Writer.Error!void,
-        trackCaller: *const fn (*anyopaque, *const std.builtin.SourceLocation) void,
+        display: *const fn (*const anyopaque, std.mem.Allocator, *std.Io.Writer, *const diag.Diagnostic) std.Io.Writer.Error!void,
     };
 
-    pub fn debug(self: *const ReportHandler, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try self.vtable.debug(self.ptr, err, writer);
-    }
-    pub fn display(self: *const ReportHandler, allocator: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try self.vtable.display(self.ptr, allocator, err, writer);
-    }
-    pub fn trackCaller(self: *ReportHandler, location: *const std.builtin.SourceLocation) void {
-        self.vtable.trackCaller(@constCast(self.ptr), location);
+    pub fn display(self: *const ReportHandler, allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+        try self.vtable.display(self.ptr, allocator, writer, err);
     }
 };
 
@@ -40,16 +29,13 @@ pub const Report = struct {
     }
 
     pub fn display(self: *const Report, allocator: std.mem.Allocator, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try self.report_handler.display(allocator, self.inner, writer);
-    }
-    pub fn debug(self: *const Report, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try self.report_handler.debug(self.inner, writer);
+        try self.report_handler.display(allocator, writer, self.inner);
     }
 };
 
 var default_handler: ReportHandler = .{
     .ptr = @ptrFromInt(1),
-    .vtable = &.{ .debug = debugFallback, .display = displayFallback, .trackCaller = trackCallerFallback },
+    .vtable = &.{ .display = displayFallback },
 };
 
 pub fn getDefaultHandler() ReportHandler {
@@ -60,13 +46,9 @@ pub fn setHook(handler: *const ReportHandler) void {
     default_handler = handler.*;
 }
 
-fn debugFallback(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    try writer.print("debug: {s}\n", .{err.message()});
-}
-fn displayFallback(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+fn displayFallback(_: *const anyopaque, _: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
     try writer.print("Error: {s}\n", .{err.message()});
 }
-fn trackCallerFallback(_: *anyopaque, _: *const std.builtin.SourceLocation) void {}
 
 test "dispatch through wrapper" {
     const D = struct {
@@ -89,7 +71,7 @@ test "dispatch through wrapper" {
     const handler = getDefaultHandler();
     var buf: [64]u8 = undefined;
     var writer = std.Io.Writer.fixed(&buf);
-    try handler.display(&d, &writer);
+    try handler.display(std.testing.allocator, &writer, &d);
     try writer.flush();
     try std.testing.expect(std.mem.indexOf(u8, buf[0..writer.end], "Error: msg") != null);
 }

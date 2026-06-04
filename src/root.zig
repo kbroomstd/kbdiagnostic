@@ -4,7 +4,6 @@ pub const source = @import("source.zig");
 pub const diagnostic = @import("diagnostic.zig");
 pub const report = @import("report.zig");
 pub const handlers = struct {
-    pub const graphical = @import("handlers/graphical.zig");
     pub const json = @import("handlers/json.zig");
     pub const debug = @import("handlers/debug.zig");
 };
@@ -24,7 +23,7 @@ pub const SourceCode = source.SourceCode;
 pub const NamedSource = source.NamedSource;
 pub const ReportHandler = report.ReportHandler;
 pub const Report = report.Report;
-pub const GraphicalReportHandler = handlers.graphical.GraphicalReportHandler;
+pub const GraphicalReportHandler = @import("handlers/GraphicalReportHandler.zig");
 pub const JsonReportHandler = handlers.json.JsonReportHandler;
 pub const DebugReportHandler = handlers.debug.DebugReportHandler;
 pub const supportsColor = theme.ansi.supportsColor;
