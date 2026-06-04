@@ -1,0 +1,4 @@
+[tools]
+ghq = "latest"
+just = "latest"
+zig = "0.16.0"
