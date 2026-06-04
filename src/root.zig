@@ -1,16 +1,29 @@
-const lib = @import("lib.zig");
+pub const severity = @import("severity.zig");
+pub const span = @import("span.zig");
+pub const source = @import("source.zig");
+pub const diagnostic = @import("diagnostic.zig");
+pub const report = @import("report.zig");
+pub const handlers = struct {
+    pub const graphical = @import("handlers/graphical.zig");
+    pub const json = @import("handlers/json.zig");
+    pub const debug = @import("handlers/debug.zig");
+};
+pub const theme = struct {
+    pub const ansi = @import("theme/ansi.zig");
+    pub const plain = @import("theme/plain.zig");
+};
+pub const assert = @import("assert.zig");
 
-pub const Severity = lib.Severity;
-pub const SourceSpan = lib.SourceSpan;
-pub const LabeledSpan = lib.LabeledSpan;
-pub const SpanContents = lib.SpanContents;
-pub const Diagnostic = lib.Diagnostic;
-pub const SourceCode = lib.SourceCode;
-pub const ReportHandler = lib.ReportHandler;
-pub const Report = lib.Report;
-pub const GraphicalReportHandler = lib.GraphicalReportHandler;
-pub const JsonReportHandler = lib.JsonReportHandler;
-pub const DebugReportHandler = lib.DebugReportHandler;
-pub const supportsColor = lib.supportsColor;
-pub const PlainTheme = lib.PlainTheme;
-pub const assert = lib.assert;
+pub const Severity = severity.Severity;
+pub const SourceSpan = span.SourceSpan;
+pub const LabeledSpan = span.LabeledSpan;
+pub const SpanContents = span.SpanContents;
+pub const Diagnostic = diagnostic.Diagnostic;
+pub const SourceCode = source.SourceCode;
+pub const ReportHandler = report.ReportHandler;
+pub const Report = report.Report;
+pub const GraphicalReportHandler = handlers.graphical.GraphicalReportHandler;
+pub const JsonReportHandler = handlers.json.JsonReportHandler;
+pub const DebugReportHandler = handlers.debug.DebugReportHandler;
+pub const supportsColor = theme.ansi.supportsColor;
+pub const PlainTheme = theme.plain.PlainTheme;
