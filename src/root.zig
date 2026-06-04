@@ -1,18 +1,16 @@
-//! By convention, root.zig is the root source file when making a package.
-const std = @import("std");
-const Io = std.Io;
+const lib = @import("lib.zig");
 
-/// This is a documentation comment to explain the `printAnotherMessage` function below.
-///
-/// Accepting an `Io.Writer` instance is a handy way to write reusable code.
-pub fn printAnotherMessage(writer: *Io.Writer) Io.Writer.Error!void {
-    try writer.print("Run `zig build test` to run the tests.\n", .{});
-}
-
-pub fn add(a: i32, b: i32) i32 {
-    return a + b;
-}
-
-test "basic add functionality" {
-    try std.testing.expect(add(3, 7) == 10);
-}
+pub const Severity = lib.Severity;
+pub const SourceSpan = lib.SourceSpan;
+pub const LabeledSpan = lib.LabeledSpan;
+pub const SpanContents = lib.SpanContents;
+pub const Diagnostic = lib.Diagnostic;
+pub const SourceCode = lib.SourceCode;
+pub const ReportHandler = lib.ReportHandler;
+pub const Report = lib.Report;
+pub const GraphicalReportHandler = lib.GraphicalReportHandler;
+pub const JsonReportHandler = lib.JsonReportHandler;
+pub const DebugReportHandler = lib.DebugReportHandler;
+pub const supportsColor = lib.supportsColor;
+pub const PlainTheme = lib.PlainTheme;
+pub const assert = lib.assert;
