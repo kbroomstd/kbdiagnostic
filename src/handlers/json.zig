@@ -2,7 +2,7 @@ const std = @import("std");
 const diag = @import("../diagnostic.zig");
 const report = @import("../report.zig");
 const sev = @import("../severity.zig");
-const span = @import("../span.zig");
+const source = @import("../source.zig");
 
 const dummy_ptr: *const anyopaque = @ptrFromInt(1);
 
@@ -41,6 +41,11 @@ pub const JsonReportHandler = struct {
     }
 
     fn display(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+        try renderReport(writer, err, null);
+        try writer.writeByte('\n');
+    }
+
+    fn renderReport(writer: *std.Io.Writer, err: *const diag.Diagnostic, parent_src: ?*const source.SourceCode) std.Io.Writer.Error!void {
         try writer.writeAll("{\"message\": \"");
         try escape(writer, err.message());
         try writer.writeAll("\"");
@@ -52,7 +57,7 @@ pub const JsonReportHandler = struct {
         try writer.writeAll(",\"severity\": \"");
         try writer.writeAll(severityName(err.severity()));
         try writer.writeAll("\"");
-        try writer.writeAll(",\"causes\": []");
+        try renderCauses(writer, err);
         if (err.url()) |url| {
             try writer.writeAll(",\"url\": \"");
             try escape(writer, url);
@@ -63,20 +68,9 @@ pub const JsonReportHandler = struct {
             try escape(writer, help);
             try writer.writeAll("\"");
         }
-        if (err.sourceCode()) |src| {
-            if (err.labels()) |labels| {
-                if (labels.len > 0) {
-                    const sp = labels[0].inner().*;
-                    const ctx = src.readSpan(&sp, 0, 0) catch unreachable;
-                    try writer.writeAll(",\"filename\": \"");
-                    try escape(writer, ctx.name() orelse "");
-                    try writer.writeAll("\"");
-                } else {
-                    try writer.writeAll(",\"filename\": \"\"");
-                }
-            } else {
-                try writer.writeAll(",\"filename\": \"\"");
-            }
+        const src = err.sourceCode() orelse parent_src;
+        if (src) |s| {
+            try renderFilename(writer, err, s);
         }
         try writer.writeAll(",\"labels\": [");
         if (err.labels()) |labels| {
@@ -95,8 +89,44 @@ pub const JsonReportHandler = struct {
                 try writer.writeAll("}}");
             }
         }
-        try writer.writeAll("],\"related\": []}");
-        try writer.writeByte('\n');
+        try writer.writeAll("],\"related\": [");
+        if (err.related()) |related| {
+            for (related, 0..) |rel, i| {
+                if (i != 0) try writer.writeAll(",");
+                try renderReport(writer, &rel, src);
+            }
+        }
+        try writer.writeAll("]}");
+    }
+
+    fn renderCauses(writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+        try writer.writeAll(",\"causes\": [");
+        var current = err.diagnosticSource();
+        var first = true;
+        while (current) |cause| {
+            if (!first) try writer.writeAll(",");
+            first = false;
+            try writer.writeAll("\"");
+            try escape(writer, cause.message());
+            try writer.writeAll("\"");
+            current = cause.diagnosticSource();
+        }
+        try writer.writeAll("]");
+    }
+
+    fn renderFilename(writer: *std.Io.Writer, err: *const diag.Diagnostic, src: *const source.SourceCode) std.Io.Writer.Error!void {
+        try writer.writeAll(",\"filename\": \"");
+        if (err.labels()) |labels| {
+            if (labels.len > 0) {
+                const sp = labels[0].inner().*;
+                const ctx = src.readSpan(&sp, 0, 0) catch {
+                    try writer.writeAll("\"");
+                    return;
+                };
+                try escape(writer, ctx.name() orelse "");
+            }
+        }
+        try writer.writeAll("\"");
     }
 
     fn trackCaller(_: *anyopaque, _: *const std.builtin.SourceLocation) void {}

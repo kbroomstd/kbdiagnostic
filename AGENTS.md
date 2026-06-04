@@ -1,3 +1,6 @@
+# Instructions
+For any file search or grep in the current git-indexed directory, use fff tools.
+
 # References
 If you need to check any references search on this local folders first than on the web if available
 

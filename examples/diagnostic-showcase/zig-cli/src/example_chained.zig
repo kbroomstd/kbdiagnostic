@@ -106,11 +106,11 @@ const DESCS = [_]NodeDesc{
         .code = "C002",
         .severity = .Warning,
         .help = "all siblings must be resolved",
-        .related_idxs = &.{0, 1, 0},
+        .related_idxs = &.{ 0, 1, 0 },
     },
     // 03: causal chain depth 2 — source is d00
     .{
-        .message = "causal chain depth 2",
+        .message = "causal chain depth 2 (d03 → d00)",
         .code = "C003",
         .severity = .Error,
         .help = "root cause is the standalone diagnostic",
@@ -124,7 +124,7 @@ const DESCS = [_]NodeDesc{
 
     // Actually, I realize d02 has no diag_source. Let me use a different chain.
     // d04.diag_source = d06, d06.diag_source = d10, d10.diag_source = d00
-    // But d06 doesn't have diag_source either. 
+    // But d06 doesn't have diag_source either.
 
     // Let me define separate "chain node" that only serves as causal link:
     // d04.diag_source = d15, d15.diag_source = d16, d16.diag_source = d00
@@ -193,7 +193,7 @@ const DESCS = [_]NodeDesc{
         .help = "related errors provide additional context",
         .source_idx = 4,
         .labels = &.{ prim("title", 74, 5), sec("items", 107, 5) },
-        .related_idxs = &.{0, 2},
+        .related_idxs = &.{ 0, 2 },
     },
     // 07: causal with source labels
     .{
@@ -214,7 +214,7 @@ const DESCS = [_]NodeDesc{
         .source_idx = 1,
         .labels = &.{prim("HealthCheck", 79, 11)},
         .diag_source_idx = 0,
-        .related_idxs = &.{2, 3},
+        .related_idxs = &.{ 2, 3 },
     },
     // 09: nested related (d09 → related[d10], d10 → related[d00])
     .{
@@ -243,7 +243,7 @@ const DESCS = [_]NodeDesc{
         .source_idx = 4,
         .labels = &.{prim("for item", 175, 8)},
         .diag_source_idx = 9,
-        .related_idxs = &.{2, 4},
+        .related_idxs = &.{ 2, 4 },
     },
     // 12: diamond (one cause, two effects as related)
     .{
@@ -254,7 +254,7 @@ const DESCS = [_]NodeDesc{
         .source_idx = 3,
         .labels = &.{prim("asyncio.gather", 645, 14)},
         .diag_source_idx = 2,
-        .related_idxs = &.{3, 4},
+        .related_idxs = &.{ 3, 4 },
     },
     // 13: cross-file (related all have different source files)
     .{
