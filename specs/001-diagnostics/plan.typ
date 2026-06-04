@@ -7,6 +7,7 @@ Current repo is only scaffold. No diagnostics model, no renderer, no public API.
 == Design Thesis
 Model core API like `miette`: `Diagnostic` trait-like contract, separate `ReportHandler`, separate `SourceCode`, plus `Report` wrapper for runtime use. Keep implementation explicit and Zig-native: vtables where needed, build-time codegen if boilerplate grows.
 Render side should specifically aim for strong parity with `miette`'s `GraphicalReportHandler` and `JsonReportHandler`, including formatting shape, metadata coverage, and output stability.
+`009-graphical-parity` owns the explicit port strategy for `GraphicalReportHandler`, including all options except syntax highlighting, with the current Zig implementation allowed to be replaced outright if that is the clearest port.
 
 == Non-Goals
 - Full `miette` feature parity.

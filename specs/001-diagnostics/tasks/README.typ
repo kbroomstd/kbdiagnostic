@@ -4,6 +4,7 @@
 #link("002-renderer-interface.typ")[`002-renderer-interface`]
 #link("003-source-context.typ")[`003-source-context`]
 #link("004-formatting.typ")[`004-formatting`]
+#link("009-graphical-parity.typ")[`009-graphical-parity`]
 
 == Shared Done
 - task file names match numbered work order
