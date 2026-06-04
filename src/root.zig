@@ -29,4 +29,3 @@ pub const JsonReportHandler = handlers.json.JsonReportHandler;
 pub const DebugReportHandler = handlers.debug.DebugReportHandler;
 pub const supportsColor = theme.ansi.supportsColor;
 pub const PlainTheme = theme.plain.PlainTheme;
-

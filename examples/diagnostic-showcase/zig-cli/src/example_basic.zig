@@ -2,19 +2,19 @@ const diagnostic = @import("kbdiagnostics");
 
 const sources = [_]diagnostic.NamedSource{
     .{ .name = "pipeline.rs", .data =
-        \\fn pipeline() {
-        \\    let config = load_config("config.toml").unwrap();
-        \\    let parsed = parse_schema(config.schema).unwrap();
-        \\    let plan = build_plan(&parsed, config.mode);
-        \\    execute(plan);
-        \\}
+    \\fn pipeline() {
+    \\    let config = load_config("config.toml").unwrap();
+    \\    let parsed = parse_schema(config.schema).unwrap();
+    \\    let plan = build_plan(&parsed, config.mode);
+    \\    execute(plan);
+    \\}
     },
     .{ .name = "query.rs", .data =
-        \\pub fn resolve() {
-        \\    let cursor = db.query("SELECT * FROM t WHERE id = ?");
-        \\    let row = cursor.next().unwrap();
-        \\    println!("{}", row["name"]);
-        \\}
+    \\pub fn resolve() {
+    \\    let cursor = db.query("SELECT * FROM t WHERE id = ?");
+    \\    let row = cursor.next().unwrap();
+    \\    println!("{}", row["name"]);
+    \\}
     },
     .{ .name = "template.txt", .data = "hello {{name}}\n{{#each items}}\n- {{this}}\n{{/each}}\n" },
 };

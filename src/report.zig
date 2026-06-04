@@ -32,8 +32,12 @@ pub const Report = struct {
         return .{ .inner = inner, .report_handler = rh };
     }
 
-    pub fn diagnostic(self: *const Report) *const diag.Diagnostic { return self.inner; }
-    pub fn handler(self: *const Report) *const ReportHandler { return self.report_handler; }
+    pub fn diagnostic(self: *const Report) *const diag.Diagnostic {
+        return self.inner;
+    }
+    pub fn handler(self: *const Report) *const ReportHandler {
+        return self.report_handler;
+    }
 
     pub fn display(self: *const Report, writer: *std.Io.Writer) std.Io.Writer.Error!void {
         try self.report_handler.display(self.inner, writer);
@@ -70,7 +74,15 @@ test "dispatch through wrapper" {
             return "msg";
         }
         const diag_vtable = diag.Diagnostic.VTable{
-            .code = null, .severity = null, .help = null, .url = null, .sourceCode = null, .labels = null, .related = null, .diagnosticSource = null, .message = message,
+            .code = null,
+            .severity = null,
+            .help = null,
+            .url = null,
+            .sourceCode = null,
+            .labels = null,
+            .related = null,
+            .diagnosticSource = null,
+            .message = message,
         };
     };
     const d = diag.Diagnostic{ .ptr = undefined, .vtable = &D.diag_vtable };

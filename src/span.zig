@@ -45,12 +45,24 @@ pub const LabeledSpan = struct {
     pub fn underline(span: SourceSpan) LabeledSpan {
         return .{ ._label = null, ._span = span, ._primary = true };
     }
-    pub fn label(self: *const LabeledSpan) ?[]const u8 { return self._label; }
-    pub fn inner(self: *const LabeledSpan) *const SourceSpan { return &self._span; }
-    pub fn offset(self: *const LabeledSpan) usize { return self._span.offset; }
-    pub fn len(self: *const LabeledSpan) usize { return self._span.length; }
-    pub fn isEmpty(self: *const LabeledSpan) bool { return self._span.length == 0; }
-    pub fn primary(self: *const LabeledSpan) bool { return self._primary; }
+    pub fn label(self: *const LabeledSpan) ?[]const u8 {
+        return self._label;
+    }
+    pub fn inner(self: *const LabeledSpan) *const SourceSpan {
+        return &self._span;
+    }
+    pub fn offset(self: *const LabeledSpan) usize {
+        return self._span.offset;
+    }
+    pub fn len(self: *const LabeledSpan) usize {
+        return self._span.length;
+    }
+    pub fn isEmpty(self: *const LabeledSpan) bool {
+        return self._span.length == 0;
+    }
+    pub fn primary(self: *const LabeledSpan) bool {
+        return self._primary;
+    }
 
     pub fn jsonStringify(self: LabeledSpan, jw: anytype) !void {
         try jw.beginObject();
@@ -80,13 +92,27 @@ pub const SpanContents = struct {
     _line_count: usize = 1,
     _language: ?[]const u8 = null,
 
-    pub fn data(self: *const SpanContents) []const u8 { return self._data; }
-    pub fn span(self: *const SpanContents) *const SourceSpan { return &self._span; }
-    pub fn name(self: *const SpanContents) ?[]const u8 { return self._name; }
-    pub fn line(self: *const SpanContents) usize { return self._line; }
-    pub fn column(self: *const SpanContents) usize { return self._column; }
-    pub fn lineCount(self: *const SpanContents) usize { return self._line_count; }
-    pub fn language(self: *const SpanContents) ?[]const u8 { return self._language; }
+    pub fn data(self: *const SpanContents) []const u8 {
+        return self._data;
+    }
+    pub fn span(self: *const SpanContents) *const SourceSpan {
+        return &self._span;
+    }
+    pub fn name(self: *const SpanContents) ?[]const u8 {
+        return self._name;
+    }
+    pub fn line(self: *const SpanContents) usize {
+        return self._line;
+    }
+    pub fn column(self: *const SpanContents) usize {
+        return self._column;
+    }
+    pub fn lineCount(self: *const SpanContents) usize {
+        return self._line_count;
+    }
+    pub fn language(self: *const SpanContents) ?[]const u8 {
+        return self._language;
+    }
 };
 
 test "labeled span variants" {

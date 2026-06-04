@@ -104,10 +104,22 @@ pub const JsonReportHandler = struct {
 
 test "json output" {
     const D = struct {
-        fn message(_: *const anyopaque) []const u8 { return "bad"; }
-        fn code(_: *const anyopaque) ?[]const u8 { return "E1"; }
+        fn message(_: *const anyopaque) []const u8 {
+            return "bad";
+        }
+        fn code(_: *const anyopaque) ?[]const u8 {
+            return "E1";
+        }
         const diag_vtable = diag.Diagnostic.VTable{
-            .code = code, .severity = null, .help = null, .url = null, .sourceCode = null, .labels = null, .related = null, .diagnosticSource = null, .message = message,
+            .code = code,
+            .severity = null,
+            .help = null,
+            .url = null,
+            .sourceCode = null,
+            .labels = null,
+            .related = null,
+            .diagnosticSource = null,
+            .message = message,
         };
     };
     const d = diag.Diagnostic{ .ptr = undefined, .vtable = &D.diag_vtable };
@@ -118,4 +130,3 @@ test "json output" {
     try writer.flush();
     try std.testing.expect(std.mem.indexOf(u8, buf[0..writer.end], "\"message\": \"bad\"") != null);
 }
-

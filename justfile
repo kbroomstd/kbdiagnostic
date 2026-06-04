@@ -14,7 +14,7 @@ run *args:
     mise exec -- zig build run -- {{ args }}
 
 format:
-    mise exec -- zig fmt src/ ./build.zig ./build.zig.zon
+    mise exec -- zig fmt src/ ./build.zig ./build.zig.zon examples/
 
 clone-references:
     #!/usr/bin/env sh

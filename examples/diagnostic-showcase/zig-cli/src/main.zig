@@ -1,4 +1,3 @@
-
 pub fn main(init: std.process.Init) !void {
     var use_json = false;
     var args = try init.minimal.args.iterateAllocator(init.arena.allocator());
