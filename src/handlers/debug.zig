@@ -2,9 +2,11 @@ const std = @import("std");
 const diag = @import("../diagnostic.zig");
 const report = @import("../report.zig");
 
+const dummy_ptr: *const anyopaque = @ptrFromInt(1);
+
 pub const DebugReportHandler = struct {
     base: report.ReportHandler = .{
-        .ptr = null,
+        .ptr = dummy_ptr,
         .vtable = &vtable,
     },
     const vtable = report.ReportHandler.VTable{

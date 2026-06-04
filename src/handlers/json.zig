@@ -2,9 +2,11 @@ const std = @import("std");
 const diag = @import("../diagnostic.zig");
 const report = @import("../report.zig");
 
+const dummy_ptr: *const anyopaque = @ptrFromInt(1);
+
 pub const JsonReportHandler = struct {
     base: report.ReportHandler = .{
-        .ptr = null,
+        .ptr = dummy_ptr,
         .vtable = &vtable,
     },
     const vtable = report.ReportHandler.VTable{
@@ -14,7 +16,7 @@ pub const JsonReportHandler = struct {
     };
 
     fn debug(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try display(null, err, writer);
+        try display(dummy_ptr, err, writer);
     }
     fn display(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
         try writer.writeAll("{\"message\":\"");

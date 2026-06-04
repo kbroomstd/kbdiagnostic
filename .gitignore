@@ -2,3 +2,5 @@
 zig-out/
 *.o
 .references/
+target/
+Cargo.lock

@@ -1,10 +1,13 @@
 const std = @import("std");
 const diag = @import("../diagnostic.zig");
+const span = @import("../span.zig");
 const report = @import("../report.zig");
+
+const dummy_ptr: *const anyopaque = @ptrFromInt(1);
 
 pub const GraphicalReportHandler = struct {
     base: report.ReportHandler = .{
-        .ptr = null,
+        .ptr = dummy_ptr,
         .vtable = &vtable,
     },
     const vtable = report.ReportHandler.VTable{
@@ -14,7 +17,7 @@ pub const GraphicalReportHandler = struct {
     };
 
     fn debug(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try display(null, err, writer);
+        try display(dummy_ptr, err, writer);
     }
     fn display(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
         try writer.print("Error: {s}\n", .{err.message()});
@@ -22,11 +25,11 @@ pub const GraphicalReportHandler = struct {
         if (err.help()) |help| try writer.print("help: {s}\n", .{help});
         if (err.url()) |url| try writer.print("url: {s}\n", .{url});
         if (err.sourceCode()) |src| {
-            const span = if (err.labels()) |labels| blk: {
+            const sp: span.SourceSpan = if (err.labels()) |labels| blk: {
                 if (labels.len > 0) break :blk labels[0].inner().*;
                 break :blk .{ .offset = 0, .length = 0 };
             } else .{ .offset = 0, .length = 0 };
-            const ctx = try src.readSpan(&span, 1, 1);
+            const ctx = src.readSpan(&sp, 1, 1) catch unreachable;
             try writer.print("{s}:{d}:{d}\n", .{ ctx.name() orelse "<source>", ctx.line(), ctx.column() });
             try writer.writeAll(ctx.data());
             try writer.writeByte('\n');

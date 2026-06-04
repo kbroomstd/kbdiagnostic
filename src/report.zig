@@ -44,7 +44,7 @@ pub const Report = struct {
 };
 
 var default_handler: ReportHandler = .{
-    .ptr = null,
+    .ptr = @ptrFromInt(1),
     .vtable = &.{ .debug = debugFallback, .display = displayFallback, .trackCaller = trackCallerFallback },
 };
 
