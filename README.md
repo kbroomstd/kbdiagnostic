@@ -1,0 +1,2 @@
+# zdiagnostics
+Fancy diagnostics
