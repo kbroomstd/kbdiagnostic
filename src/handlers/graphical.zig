@@ -31,7 +31,7 @@ pub const GraphicalReportHandler = struct {
     };
 
     fn debug(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try display(dummy_ptr, err, writer);
+        try display(dummy_ptr, std.heap.smp_allocator, err, writer);
     }
 
     fn icon(s: ?sev.Severity) []const u8 {
@@ -50,15 +50,15 @@ pub const GraphicalReportHandler = struct {
         };
     }
 
-    fn display(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try renderHeader(writer, err, false);
-        try renderCauses(writer, err);
-        if (err.sourceCode()) |src| {
-            try renderSnippets(writer, err, src);
-        }
-        try renderFooter(writer, err);
-        try renderRelated(writer, err);
+fn display(_: *const anyopaque, allocator: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    try renderHeader(writer, err, false);
+    try renderCauses(allocator, writer, err);
+    if (err.sourceCode()) |src| {
+        try renderSnippets(allocator, writer, err, src);
     }
+    try renderFooter(writer, err);
+    try renderRelated(allocator, writer, err);
+}
 
     fn renderHeader(writer: *std.Io.Writer, err: *const diag.Diagnostic, is_nested: bool) std.Io.Writer.Error!void {
         var need_newline = is_nested;
@@ -77,17 +77,32 @@ pub const GraphicalReportHandler = struct {
         if (need_newline) try writer.writeByte('\n');
     }
 
-    fn renderCauses(writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+    fn renderCauses(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
         try writer.print("  {s} {s}\n", .{ icon(err.severity()), err.message() });
-        try renderCauseChain(writer, err);
+        try renderCauseChain(allocator, writer, err);
     }
 
-    fn renderCauseChain(writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+fn renderCauseChain(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
         var current = err.diagnosticSource();
         while (current) |cause| {
             const next = cause.diagnosticSource();
             const branch = if (next == null) chars.lbot else chars.lcross;
-            try writer.print("  {s}{s}{s} {s}\n", .{ branch, chars.hbar, chars.rarrow, cause.message() });
+            try writer.print("  {s}{s}{s} {s}\n", .{ branch, chars.hbar, chars.rarrow, cause.code() orelse cause.message() });
+            var inner_buf = std.ArrayList(u8).initCapacity(allocator, 4096) catch return;
+            defer inner_buf.deinit(allocator);
+            var inner_writer = std.Io.Writer.fromArrayList(&inner_buf);
+            try renderCauses(allocator, &inner_writer, cause);
+            if (cause.sourceCode()) |src| {
+                try renderSnippets(allocator, &inner_writer, cause, src);
+            }
+            try renderFooter(&inner_writer, cause);
+            try renderRelated(allocator, &inner_writer, cause);
+            var inner = std.Io.Writer.toArrayList(&inner_writer);
+            defer inner.deinit(allocator);
+            if (inner.items.len > 0) {
+                try writer.writeByte('\n');
+                try writer.writeAll(inner.items);
+            }
             current = next;
         }
     }
@@ -98,23 +113,23 @@ pub const GraphicalReportHandler = struct {
         }
     }
 
-    fn renderRelated(writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+fn renderRelated(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
         if (err.related()) |related| {
             for (related) |cause| {
                 try writer.writeByte('\n');
                 try writer.print("{s}: ", .{sevName(cause.severity())});
                 try renderHeader(writer, &cause, true);
-                try renderCauses(writer, &cause);
+                try renderCauses(allocator, writer, &cause);
                 if (cause.sourceCode()) |src| {
-                    try renderSnippets(writer, &cause, src);
+                    try renderSnippets(allocator, writer, &cause, src);
                 }
                 try renderFooter(writer, &cause);
-                try renderRelated(writer, &cause);
+                try renderRelated(allocator, writer, &cause);
             }
         }
     }
 
-    fn renderSnippets(writer: *std.Io.Writer, err: *const diag.Diagnostic, src: *const source.SourceCode) std.Io.Writer.Error!void {
+fn renderSnippets(_: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic, src: *const source.SourceCode) std.Io.Writer.Error!void {
         const raw_labels = err.labels() orelse return;
         if (raw_labels.len == 0) return;
 

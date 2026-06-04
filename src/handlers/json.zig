@@ -16,7 +16,7 @@ pub const JsonReportHandler = struct {
     };
 
     fn debug(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        try display(dummy_ptr, err, writer);
+        try display(dummy_ptr, std.heap.smp_allocator, err, writer);
     }
 
     fn escape(writer: *std.Io.Writer, s: []const u8) std.Io.Writer.Error!void {
@@ -40,7 +40,7 @@ pub const JsonReportHandler = struct {
         };
     }
 
-    fn display(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    fn display(_: *const anyopaque, _: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
         try renderReport(writer, err, null);
         try writer.writeByte('\n');
     }

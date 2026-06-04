@@ -34,13 +34,13 @@ pub fn main(init: std.process.Init) !void {
 
     for (example_basic.all) |item| {
         const d = item.diagnostic();
-        try handler.display(&d, out);
+        try handler.display(arena, &d, out);
         if (!use_json) try out.writeByte('\n');
     }
 
     const chained = try example_chained.build(arena, &sources);
     for (chained) |d| {
-        try handler.display(&d, out);
+        try handler.display(arena, &d, out);
         if (!use_json) try out.writeByte('\n');
     }
 

@@ -44,6 +44,8 @@ example-showcase mode="graphical":
 example-showcase-diff mode="graphical":
     #!/usr/bin/env sh
     set -eu
+    export TMPDIR=/tmp
+    export XDG_RUNTIME_DIR=/tmp
 
     zig_out="$(mktemp)"
     rust_out="$(mktemp)"

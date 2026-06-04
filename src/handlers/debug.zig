@@ -18,7 +18,7 @@ pub const DebugReportHandler = struct {
     fn debug(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
         try writer.print("debug: {s}\n", .{err.message()});
     }
-    fn display(_: *const anyopaque, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+    fn display(_: *const anyopaque, _: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
         try writer.print("Error: {s}\n", .{err.message()});
     }
     fn trackCaller(_: *anyopaque, _: *const std.builtin.SourceLocation) void {}
