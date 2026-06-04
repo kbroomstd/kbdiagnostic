@@ -1,0 +1,18 @@
+{% extends "base.tera" %}
+{% block content %}
+<div class="report">
+<h1>{{ title | capitalize }}</h1>
+{% if items | length == 0 %}
+<p>No items found.</p>
+{% else %}
+<table>
+{% for item in items %}
+<tr>
+  <td>{{ item.name | upper }}</td>
+  <td>{{ item.value | default(value="—") }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+</div>
+{% endblock content %}
