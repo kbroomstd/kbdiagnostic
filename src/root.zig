@@ -19,7 +19,9 @@ pub const SourceSpan = span.SourceSpan;
 pub const LabeledSpan = span.LabeledSpan;
 pub const SpanContents = span.SpanContents;
 pub const Diagnostic = diagnostic.Diagnostic;
+pub const DiagnosticData = diagnostic.DiagnosticData;
 pub const SourceCode = source.SourceCode;
+pub const NamedSource = source.NamedSource;
 pub const ReportHandler = report.ReportHandler;
 pub const Report = report.Report;
 pub const GraphicalReportHandler = handlers.graphical.GraphicalReportHandler;
@@ -27,3 +29,4 @@ pub const JsonReportHandler = handlers.json.JsonReportHandler;
 pub const DebugReportHandler = handlers.debug.DebugReportHandler;
 pub const supportsColor = theme.ansi.supportsColor;
 pub const PlainTheme = theme.plain.PlainTheme;
+

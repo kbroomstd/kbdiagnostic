@@ -31,19 +31,18 @@ const slice_vtable = SourceCode.VTable{ .readSpan = sliceRead };
 pub const NamedSource = struct {
     name: []const u8,
     data: []const u8,
-    pub fn source(self: *const NamedSource) SourceCode {
-        return .{ .ptr = self, .vtable = &named_vtable };
+
+    fn readSpan(ptr: *const anyopaque, s: *const span.SourceSpan, _: usize, _: usize) anyerror!span.SpanContents {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return buildContents(self.data, self.name, s.*, null);
+    }
+
+    const vtable = SourceCode.VTable{ .readSpan = readSpan };
+
+    pub fn source(self: *const @This()) SourceCode {
+        return .{ .ptr = self, .vtable = &vtable };
     }
 };
-
-fn namedRead(ptr: *const anyopaque, s: *const span.SourceSpan, before: usize, after: usize) anyerror!span.SpanContents {
-    _ = before;
-    _ = after;
-    const self: *const NamedSource = @ptrCast(@alignCast(ptr));
-    return buildContents(self.data, self.name, s.*, null);
-}
-
-const named_vtable = SourceCode.VTable{ .readSpan = namedRead };
 
 fn buildContents(data: []const u8, name: ?[]const u8, sp: span.SourceSpan, language: ?[]const u8) span.SpanContents {
     var line: usize = 1;

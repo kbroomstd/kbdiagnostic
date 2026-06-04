@@ -26,6 +26,10 @@ pub const LabeledSpan = struct {
     pub fn new(lbl: ?[]const u8, off: usize, length: usize) LabeledSpan {
         return .{ ._label = lbl, ._span = .{ .offset = off, .length = length }, ._primary = false };
     }
+
+    pub fn newPrimary(lbl: ?[]const u8, off: usize, length: usize) LabeledSpan {
+        return .{ ._label = lbl, ._span = .{ .offset = off, .length = length }, ._primary = true };
+    }
     pub fn newWithSpan(lbl: ?[]const u8, sp: SourceSpan) LabeledSpan {
         return .{ ._label = lbl, ._span = sp, ._primary = false };
     }

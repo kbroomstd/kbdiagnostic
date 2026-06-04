@@ -1,100 +1,6 @@
-const NamedSource = struct {
-    name: []const u8,
-    data: []const u8,
+const diagnostic = @import("kbdiagnostics");
 
-    fn readSpan(ptr: *const anyopaque, s: *const kb.SourceSpan, _: usize, _: usize) anyerror!kb.SpanContents {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        var line: usize = 1;
-        var column: usize = 1;
-        var i: usize = 0;
-        while (i < @min(s.offset, self.data.len)) : (i += 1) {
-            if (self.data[i] == '\n') {
-                line += 1;
-                column = 1;
-            } else {
-                column += 1;
-            }
-        }
-        var line_count: usize = 1;
-        var j = s.offset;
-        const end = @min(self.data.len, s.offset + s.length);
-        while (j < end) : (j += 1) {
-            if (self.data[j] == '\n') line_count += 1;
-        }
-        return .{ ._data = self.data, ._span = s.*, ._name = self.name, ._line = line, ._column = column, ._line_count = line_count, ._language = null };
-    }
-
-    const vtable = kb.SourceCode.VTable{ .readSpan = readSpan };
-
-    fn source(self: *const @This()) kb.SourceCode {
-        return .{ .ptr = self, .vtable = &vtable };
-    }
-};
-
-const diag = struct {
-    message: []const u8,
-    code: ?[]const u8 = null,
-    severity: ?kb.Severity = null,
-    help: ?[]const u8 = null,
-    url: ?[]const u8 = null,
-    source: ?*const kb.SourceCode = null,
-    labels: []const kb.LabeledSpan = &.{},
-    related: []const kb.Diagnostic = &.{},
-
-    pub fn diagnostic(self: *const @This()) kb.Diagnostic {
-        return .{ .ptr = self, .vtable = &vtable };
-    }
-
-    fn codeFn(ptr: *const anyopaque) ?[]const u8 {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        return self.code;
-    }
-    fn severityFn(ptr: *const anyopaque) ?kb.Severity {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        return self.severity;
-    }
-    fn helpFn(ptr: *const anyopaque) ?[]const u8 {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        return self.help;
-    }
-    fn urlFn(ptr: *const anyopaque) ?[]const u8 {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        return self.url;
-    }
-    fn sourceFn(ptr: *const anyopaque) ?*const kb.SourceCode {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        return self.source;
-    }
-    fn labelsFn(ptr: *const anyopaque) ?[]const kb.LabeledSpan {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        return if (self.labels.len == 0) null else self.labels;
-    }
-    fn relatedFn(ptr: *const anyopaque) ?[]const kb.Diagnostic {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        return if (self.related.len == 0) null else self.related;
-    }
-    fn diagnosticSourceFn(_: *const anyopaque) ?*const kb.Diagnostic {
-        return null;
-    }
-    fn messageFn(ptr: *const anyopaque) []const u8 {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
-        return self.message;
-    }
-
-    const vtable = kb.Diagnostic.VTable{
-        .code = codeFn,
-        .severity = severityFn,
-        .help = helpFn,
-        .url = urlFn,
-        .sourceCode = sourceFn,
-        .labels = labelsFn,
-        .related = relatedFn,
-        .diagnosticSource = diagnosticSourceFn,
-        .message = messageFn,
-    };
-};
-
-const sources = [_]NamedSource{
+const sources = [_]diagnostic.NamedSource{
     .{ .name = "pipeline.rs", .data =
         \\fn pipeline() {
         \\    let config = load_config("config.toml").unwrap();
@@ -117,29 +23,29 @@ const source_pipeline = sources[0].source();
 const source_query = sources[1].source();
 const source_template = sources[2].source();
 
-const l0 = [_]kb.LabeledSpan{
-    .{ ._label = "config path", ._span = .{ .offset = 28, .length = 13 }, ._primary = true },
-    .{ ._label = "missing file", ._span = .{ .offset = 28, .length = 13 }, ._primary = false },
+const l0 = [_]diagnostic.LabeledSpan{
+    diagnostic.LabeledSpan.newPrimary("config path", 28, 13),
+    diagnostic.LabeledSpan.new("missing file", 28, 13),
 };
-const l1 = [_]kb.LabeledSpan{
-    .{ ._label = "schema", ._span = .{ .offset = 64, .length = 12 }, ._primary = true },
-    .{ ._label = "mode", ._span = .{ .offset = 109, .length = 4 }, ._primary = false },
+const l1 = [_]diagnostic.LabeledSpan{
+    diagnostic.LabeledSpan.newPrimary("schema", 64, 12),
+    diagnostic.LabeledSpan.new("mode", 109, 4),
 };
-const l2 = [_]kb.LabeledSpan{
-    .{ ._label = "row access", ._span = .{ .offset = 95, .length = 15 }, ._primary = true },
-    .{ ._label = "query result", ._span = .{ .offset = 48, .length = 12 }, ._primary = false },
-    .{ ._label = "format string", ._span = .{ .offset = 115, .length = 15 }, ._primary = false },
+const l2 = [_]diagnostic.LabeledSpan{
+    diagnostic.LabeledSpan.newPrimary("row access", 95, 15),
+    diagnostic.LabeledSpan.new("query result", 48, 12),
+    diagnostic.LabeledSpan.new("format string", 115, 15),
 };
-const l3 = [_]kb.LabeledSpan{
-    .{ ._label = "panic site", ._span = .{ .offset = 24, .length = 14 }, ._primary = true },
+const l3 = [_]diagnostic.LabeledSpan{
+    diagnostic.LabeledSpan.newPrimary("panic site", 24, 14),
 };
-const l4 = [_]kb.LabeledSpan{
-    .{ ._label = "name", ._span = .{ .offset = 7, .length = 4 }, ._primary = true },
-    .{ ._label = "section", ._span = .{ .offset = 15, .length = 17 }, ._primary = false },
-    .{ ._label = "loop", ._span = .{ .offset = 34, .length = 13 }, ._primary = false },
+const l4 = [_]diagnostic.LabeledSpan{
+    diagnostic.LabeledSpan.newPrimary("name", 7, 4),
+    diagnostic.LabeledSpan.new("section", 15, 17),
+    diagnostic.LabeledSpan.new("loop", 34, 13),
 };
 
-pub const all = [_]diag{
+pub const all = [_]diagnostic.DiagnosticData{
     .{ .message = "cannot open config", .code = "E001", .severity = .Error, .help = "pass --config or create config.toml", .url = "https://example.invalid/config", .source = &source_pipeline, .labels = &l0 },
     .{ .message = "schema parse failed", .code = "E002", .severity = .Error, .help = "validate schema before execution", .source = &source_pipeline, .labels = &l1 },
     .{ .message = "SQL row shape mismatch", .code = "E003", .severity = .Warning, .help = "project columns explicitly", .url = "https://example.invalid/sql", .source = &source_query, .labels = &l2 },
@@ -161,6 +67,3 @@ pub const all = [_]diag{
     .{ .message = "diagnostic chain collapsed", .code = "E019", .severity = .Error, .help = "keep root and cause" },
     .{ .message = "all clear but noisy", .code = "A020", .severity = .Advice, .help = "reduce log spam" },
 };
-
-const std = @import("std");
-const kb = @import("kbdiagnostics");

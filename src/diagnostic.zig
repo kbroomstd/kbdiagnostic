@@ -19,7 +19,9 @@ pub const Diagnostic = struct {
         message: *const fn (*const anyopaque) []const u8,
     };
 
-    pub fn message(self: *const Diagnostic) []const u8 { return self.vtable.message(self.ptr); }
+    pub fn message(self: *const Diagnostic) []const u8 {
+        return self.vtable.message(self.ptr);
+    }
     pub fn code(self: *const Diagnostic) ?[]const u8 {
         return if (self.vtable.code) |f| f(self.ptr) else null;
     }
@@ -50,6 +52,86 @@ pub const Diagnostic = struct {
         return self.related();
     }
 };
+
+pub const DiagnosticData = struct {
+    message: []const u8,
+    code: ?[]const u8 = null,
+    severity: ?sev.Severity = null,
+    help: ?[]const u8 = null,
+    url: ?[]const u8 = null,
+    source: ?*const source.SourceCode = null,
+    labels: []const span.LabeledSpan = &.{},
+    related: []const Diagnostic = &.{},
+
+    pub fn diagnostic(self: *const @This()) Diagnostic {
+        return .{ .ptr = self, .vtable = &vtable };
+    }
+
+    fn codeFn(ptr: *const anyopaque) ?[]const u8 {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return self.code;
+    }
+    fn severityFn(ptr: *const anyopaque) ?sev.Severity {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return self.severity;
+    }
+    fn helpFn(ptr: *const anyopaque) ?[]const u8 {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return self.help;
+    }
+    fn urlFn(ptr: *const anyopaque) ?[]const u8 {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return self.url;
+    }
+    fn sourceFn(ptr: *const anyopaque) ?*const source.SourceCode {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return self.source;
+    }
+    fn labelsFn(ptr: *const anyopaque) ?[]const span.LabeledSpan {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return if (self.labels.len == 0) null else self.labels;
+    }
+    fn relatedFn(ptr: *const anyopaque) ?[]const Diagnostic {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return if (self.related.len == 0) null else self.related;
+    }
+    fn diagnosticSourceFn(_: *const anyopaque) ?*const Diagnostic {
+        return null;
+    }
+    fn messageFn(ptr: *const anyopaque) []const u8 {
+        const self: *const @This() = @ptrCast(@alignCast(ptr));
+        return self.message;
+    }
+
+    const vtable = Diagnostic.VTable{
+        .code = codeFn,
+        .severity = severityFn,
+        .help = helpFn,
+        .url = urlFn,
+        .sourceCode = sourceFn,
+        .labels = labelsFn,
+        .related = relatedFn,
+        .diagnosticSource = diagnosticSourceFn,
+        .message = messageFn,
+    };
+};
+
+inline fn DiagnosticDelegate(impl_obj: anytype) type {
+    const ImplType = @TypeOf(impl_obj);
+    return struct {
+        fn log(impl: *anyopaque, msg: []const u8) void {
+            TPtr(ImplType, impl).log(msg);
+        }
+
+        fn setLevel(impl: *anyopaque, level: usize) void {
+            TPtr(ImplType, impl).setLevel(level);
+        }
+    };
+}
+
+fn TPtr(T: type, opaque_ptr: *anyopaque) T {
+    return @as(T, @ptrCast(@alignCast(opaque_ptr)));
+}
 
 test "default trait methods return none" {
     const d = Diagnostic{
