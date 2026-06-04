@@ -1,5 +1,5 @@
 = Purpose
-Build `kbdiagnostics` into a Zig diagnostics crate with polished error reports, notes, spans, labels, and source context. Target feel: `miette`-style output, but shaped by Zig idioms and this repo's current `std.Io` / build setup.
+Build `kbdiagnostic` into a Zig diagnostics crate with polished error reports, notes, spans, labels, and source context. Target feel: `miette`-style output, but shaped by Zig idioms and this repo's current `std.Io` / build setup.
 
 == Why Now
 Current repo is only scaffold. No diagnostics model, no renderer, no public API. This spec defines core shape before code grows.

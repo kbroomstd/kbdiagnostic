@@ -23,5 +23,5 @@ pub fn main(init: std.process.Init) !void {
 }
 
 const std = @import("std");
-const kb = @import("kbdiagnostics");
+const kb = @import("kbdiagnostic");
 const example_basic = @import("./example_basic.zig");

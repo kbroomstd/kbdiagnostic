@@ -29,5 +29,5 @@ Add small assertion helpers for app developers and library tests.
 == Done
 - `src/assert.zig` exists
 - `assert` export exposes `expectEqualSpan`, `expectEqualLabel`, `expectEqualDiagnostic`, `expectOutputContains`, `expectJsonField`
-- at least one library test imports `kbdiagnostics.assert`
+- at least one library test imports `kbdiagnostic.assert`
 - `typst compile --features html --format html specs/001-diagnostics/tasks/005-assertions.typ /tmp/assertions.html` passes

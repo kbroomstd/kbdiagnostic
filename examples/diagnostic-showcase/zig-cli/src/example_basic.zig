@@ -1,4 +1,4 @@
-const diagnostic = @import("kbdiagnostics");
+const diagnostic = @import("kbdiagnostic");
 
 const sources = [_]diagnostic.NamedSource{
     .{ .name = "pipeline.rs", .data =

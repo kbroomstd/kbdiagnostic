@@ -1,6 +1,6 @@
 = Context
 
-`kbdiagnostics` aims to provide beautiful failure reports for Zig apps. The project should follow `miette`'s split: diagnostic metadata, source lookup, render handler, report wrapper. Zig side should stay explicit: small structs, vtables only at edges, build-time generation if needed.
+`kbdiagnostic` aims to provide beautiful failure reports for Zig apps. The project should follow `miette`'s split: diagnostic metadata, source lookup, render handler, report wrapper. Zig side should stay explicit: small structs, vtables only at edges, build-time generation if needed.
 Primary render target is not generic formatting. It is close parity with `miette`'s `GraphicalReportHandler` and `JsonReportHandler`.
 
 == Problem
