@@ -5,20 +5,20 @@ const json = @import("handlers/json.zig");
 const debug = @import("handlers/debug.zig");
 
 pub const ReportHandler = struct {
-ptr: *const anyopaque,
-vtable: *const VTable,
-pub const VTable = struct {
-debug: *const fn (*const anyopaque, *const diag.Diagnostic, *std.Io.Writer) std.Io.Writer.Error!void,
-display: *const fn (*const anyopaque, std.mem.Allocator, *const diag.Diagnostic, *std.Io.Writer) std.Io.Writer.Error!void,
-trackCaller: *const fn (*anyopaque, *const std.builtin.SourceLocation) void,
-};
+    ptr: *const anyopaque,
+    vtable: *const VTable,
+    pub const VTable = struct {
+        debug: *const fn (*const anyopaque, *const diag.Diagnostic, *std.Io.Writer) std.Io.Writer.Error!void,
+        display: *const fn (*const anyopaque, std.mem.Allocator, *const diag.Diagnostic, *std.Io.Writer) std.Io.Writer.Error!void,
+        trackCaller: *const fn (*anyopaque, *const std.builtin.SourceLocation) void,
+    };
 
-pub fn debug(self: *const ReportHandler, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-try self.vtable.debug(self.ptr, err, writer);
-}
-pub fn display(self: *const ReportHandler, allocator: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-try self.vtable.display(self.ptr, allocator, err, writer);
-}
+    pub fn debug(self: *const ReportHandler, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+        try self.vtable.debug(self.ptr, err, writer);
+    }
+    pub fn display(self: *const ReportHandler, allocator: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+        try self.vtable.display(self.ptr, allocator, err, writer);
+    }
     pub fn trackCaller(self: *ReportHandler, location: *const std.builtin.SourceLocation) void {
         self.vtable.trackCaller(@constCast(self.ptr), location);
     }
@@ -39,9 +39,9 @@ pub const Report = struct {
         return self.report_handler;
     }
 
-pub fn display(self: *const Report, allocator: std.mem.Allocator, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-try self.report_handler.display(allocator, self.inner, writer);
-}
+    pub fn display(self: *const Report, allocator: std.mem.Allocator, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+        try self.report_handler.display(allocator, self.inner, writer);
+    }
     pub fn debug(self: *const Report, writer: *std.Io.Writer) std.Io.Writer.Error!void {
         try self.report_handler.debug(self.inner, writer);
     }
