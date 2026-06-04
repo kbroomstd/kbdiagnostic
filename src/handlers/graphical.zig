@@ -50,59 +50,64 @@ pub const GraphicalReportHandler = struct {
         };
     }
 
-fn display(_: *const anyopaque, allocator: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    try renderHeader(writer, err, false);
-    try renderCauses(allocator, writer, err);
-    if (err.sourceCode()) |src| {
-        try renderSnippets(allocator, writer, err, src);
+    fn display(_: *const anyopaque, allocator: std.mem.Allocator, err: *const diag.Diagnostic, writer: *std.Io.Writer) std.Io.Writer.Error!void {
+        try renderReportInner(allocator, writer, err, true, true, false);
     }
-    try renderFooter(writer, err);
-    try renderRelated(allocator, writer, err);
-}
+
+    fn renderReportInner(
+        allocator: std.mem.Allocator,
+        writer: *std.Io.Writer,
+        err: *const diag.Diagnostic,
+        show_footer: bool,
+        show_cause_chain: bool,
+        show_related_as_nested: bool,
+    ) std.Io.Writer.Error!void {
+        try renderHeader(writer, err, false);
+        try renderCauses(allocator, writer, err, show_cause_chain);
+        if (err.sourceCode()) |src| {
+            try renderSnippets(allocator, writer, err, src);
+        }
+        if (show_footer) {
+            try renderFooter(writer, err);
+        }
+        try renderRelated(allocator, writer, err, show_related_as_nested);
+    }
 
     fn renderHeader(writer: *std.Io.Writer, err: *const diag.Diagnostic, is_nested: bool) std.Io.Writer.Error!void {
         var need_newline = is_nested;
-        if (err.url()) |url| {
-            if (err.code()) |code| {
-                try writer.print("\x1b]8;;{s}\x1b\\{s} (link)\x1b]8;;\x1b\\\n", .{ url, code });
-                need_newline = true;
+        if (err.code()) |code| {
+            if (err.url()) |url| {
+                try writer.print("\x1b]8;;{s}\x1b\\{s} ({s})\x1b]8;;\x1b\\\n", .{ url, code, "link" });
             } else {
-                try writer.print("\x1b]8;;{s}\x1b\\(link)\x1b]8;;\x1b\\\n", .{url});
-                need_newline = true;
+                try writer.print("{s}\n", .{code});
             }
-        } else if (err.code()) |code| {
-            try writer.print("{s}\n", .{code});
             need_newline = true;
         }
         if (need_newline) try writer.writeByte('\n');
     }
 
-    fn renderCauses(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+    fn renderCauses(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic, show_cause_chain: bool) std.Io.Writer.Error!void {
         try writer.print("  {s} {s}\n", .{ icon(err.severity()), err.message() });
-        try renderCauseChain(allocator, writer, err);
+        if (show_cause_chain) {
+            try renderCauseChain(allocator, writer, err);
+        }
     }
 
-fn renderCauseChain(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+    fn renderCauseChain(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
         var current = err.diagnosticSource();
         while (current) |cause| {
             const next = cause.diagnosticSource();
-            const branch = if (next == null) chars.lbot else chars.lcross;
-            try writer.print("  {s}{s}{s} {s}\n", .{ branch, chars.hbar, chars.rarrow, cause.code() orelse cause.message() });
-            var inner_buf = std.ArrayList(u8).initCapacity(allocator, 4096) catch return;
-            defer inner_buf.deinit(allocator);
-            var inner_writer = std.Io.Writer.fromArrayList(&inner_buf);
-            try renderCauses(allocator, &inner_writer, cause);
-            if (cause.sourceCode()) |src| {
-                try renderSnippets(allocator, &inner_writer, cause, src);
-            }
-            try renderFooter(&inner_writer, cause);
-            try renderRelated(allocator, &inner_writer, cause);
-            var inner = std.Io.Writer.toArrayList(&inner_writer);
+            const initial_prefix = if (next == null) "  ╰─▶ " else "  ├─▶ ";
+            const rest_prefix = if (next == null) "      " else "  │   ";
+            var inner: std.ArrayList(u8) = .empty;
             defer inner.deinit(allocator);
-            if (inner.items.len > 0) {
-                try writer.writeByte('\n');
-                try writer.writeAll(inner.items);
-            }
+            var inner_writer: std.Io.Writer.Allocating = .fromArrayList(allocator, &inner);
+            defer inner_writer.deinit();
+
+            try renderReportInner(allocator, &inner_writer.writer, cause, true, false, false);
+            const committed = inner_writer.toArrayList();
+            const trimmed = trimStartNewlines(committed.items);
+            if (trimmed.len > 0) try writeIndentedBlock(writer, trimmed, initial_prefix, rest_prefix);
             current = next;
         }
     }
@@ -113,23 +118,74 @@ fn renderCauseChain(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *
         }
     }
 
-fn renderRelated(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+    fn renderRelated(allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic, show_related_as_nested: bool) std.Io.Writer.Error!void {
         if (err.related()) |related| {
-            for (related) |cause| {
-                try writer.writeByte('\n');
-                try writer.print("{s}: ", .{sevName(cause.severity())});
-                try renderHeader(writer, &cause, true);
-                try renderCauses(allocator, writer, &cause);
-                if (cause.sourceCode()) |src| {
-                    try renderSnippets(allocator, writer, &cause, src);
+            if (show_related_as_nested) {
+                for (related, 0..) |cause, idx| {
+                    const is_last = idx + 1 == related.len;
+                    const initial_prefix = if (is_last) "  ╰─▶ " else "  ├─▶ ";
+                    const rest_prefix = if (is_last) "      " else "  │   ";
+                    var inner = std.ArrayList(u8).empty;
+                    defer inner.deinit(allocator);
+                    var inner_writer: std.Io.Writer.Allocating = .fromArrayList(allocator, &inner);
+                    defer inner_writer.deinit();
+
+                    try renderReportInner(allocator, &inner_writer.writer, &cause, true, false, true);
+
+                    const committed = inner_writer.toArrayList();
+                    const trimmed = trimNewlines(committed.items);
+                    if (trimmed.len == 0) continue;
+                    try writeIndentedBlock(writer, trimmed, initial_prefix, rest_prefix);
                 }
-                try renderFooter(writer, &cause);
-                try renderRelated(allocator, writer, &cause);
+            } else {
+                for (related) |cause| {
+                    try writer.writeByte('\n');
+                    try writer.print("{s}: ", .{sevName(cause.severity())});
+                    try renderHeader(writer, &cause, true);
+                    try renderCauses(allocator, writer, &cause, true);
+                    if (cause.sourceCode()) |src| {
+                        try renderSnippets(allocator, writer, &cause, src);
+                    }
+                    try renderFooter(writer, &cause);
+                    try renderRelated(allocator, writer, &cause, false);
+                }
             }
         }
     }
 
-fn renderSnippets(_: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic, src: *const source.SourceCode) std.Io.Writer.Error!void {
+    fn trimStartNewlines(text: []const u8) []const u8 {
+        var start: usize = 0;
+        while (start < text.len and text[start] == '\n') start += 1;
+        return text[start..];
+    }
+
+    fn trimNewlines(text: []const u8) []const u8 {
+        var start: usize = 0;
+        var end = text.len;
+        while (start < end and text[start] == '\n') start += 1;
+        while (end > start and text[end - 1] == '\n') end -= 1;
+        return text[start..end];
+    }
+
+    fn trimRightSpaces(text: []const u8) []const u8 {
+        var end = text.len;
+        while (end > 0 and (text[end - 1] == ' ' or text[end - 1] == '\t')) end -= 1;
+        return text[0..end];
+    }
+
+    fn writeIndentedBlock(writer: *std.Io.Writer, text: []const u8, initial_prefix: []const u8, rest_prefix: []const u8) std.Io.Writer.Error!void {
+        var lines = std.mem.splitScalar(u8, text, '\n');
+        var first = true;
+        while (lines.next()) |line| {
+            const trimmed_line = trimRightSpaces(line);
+            try writer.writeAll(if (first) initial_prefix else rest_prefix);
+            try writer.writeAll(trimmed_line);
+            try writer.writeByte('\n');
+            first = false;
+        }
+    }
+
+    fn renderSnippets(_: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic, src: *const source.SourceCode) std.Io.Writer.Error!void {
         const raw_labels = err.labels() orelse return;
         if (raw_labels.len == 0) return;
 

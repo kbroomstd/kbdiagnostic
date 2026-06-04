@@ -1,0 +1,1 @@
+x 2026-06-04 2026-06-04 Make it so that the report handler has the same output as the one in miette

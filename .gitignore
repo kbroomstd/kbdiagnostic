@@ -4,3 +4,4 @@ zig-out/
 .references/
 target/
 Cargo.lock
+*.tuxedo-lock
