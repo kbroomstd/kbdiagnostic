@@ -19,8 +19,8 @@ format:
 clone-references:
   #!/usr/bin/env sh
   GHQ_ROOT={{source_directory()}}/.references
-  mise exec -- ghq get codeberg.org/ziglang/zig -b 0.16.x
-  mise exec -- ghq get github.com/zkat/miette v7.6.0 -b v7.6.0
+  # mise exec -- ghq get codeberg.org/ziglang/zig -b 0.16.x
+  mise exec -- ghq get github.com/zkat/miette -b v7.6.0
 
 generate-toml-test-suite:
   mise exec -- zig run tools/generate_TOMLTestSuite.zig

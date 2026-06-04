@@ -1,8 +1,10 @@
 # References
 If you need to check any references search on this local folders first than on the web if available
 
+Check refs under `.references` or `$GHQ_ROOT` first. Path shape usually `<host>/<org>/<repo>`.
+
 For example
-- zig 0.16 std `.references/codeberg/ziglang/zig/lib/std`
+- zig 0.16 std `.references/codeberg.org/ziglang/zig/lib/std`
 - rust miette `.references/github.com/zkat/miette`
 
 # Tasks
@@ -26,3 +28,6 @@ Pattern: `[thing] [action] [reason]. [next step].`
 Not: "Sure! I'd be happy to help you with that. The issue you're experiencing is likely caused by..."
 Yes: "Bug in auth middleware. Token expiry check use `<` not `<=`. Fix:"
 
+# Commits
+
+- Use conventional commit messages (e.g., `fix:`, `feat:`, `chore:`)
