@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+set -eu
+
+#USAGE flag "--json"
+
+export TMPDIR=/tmp
+export XDG_RUNTIME_DIR=/tmp
+
+zig_out="$(mktemp)"
+rust_out="$(mktemp)"
+trap 'rm -f "$zig_out" "$rust_out"' EXIT
+
+if [ $"{usage_json:-false}" = "true" ]; then
+  (cd examples/diagnostic-showcase/zig-cli && zig build run -- --json) > "$zig_out"
+  (cd examples/diagnostic-showcase/rust-cli && CARGO_NET_OFFLINE=true RUSTFLAGS=-Awarnings cargo run -q -- --json) > "$rust_out"
+else
+  (cd examples/diagnostic-showcase/zig-cli && zig build run) > "$zig_out"
+  (cd examples/diagnostic-showcase/rust-cli && CARGO_NET_OFFLINE=true RUSTFLAGS=-Awarnings cargo run -q) > "$rust_out"
+fi
+
+diff -u \
+  --label "zig-cli" "$zig_out" \
+  --label "rust-cli" "$rust_out" \
+  | delta || true

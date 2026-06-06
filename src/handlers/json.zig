@@ -122,7 +122,6 @@ pub const JsonReportHandler = struct {
         }
         try writer.writeAll("\"");
     }
-
 };
 
 test "json output" {

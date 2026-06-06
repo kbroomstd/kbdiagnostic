@@ -1,4 +1,35 @@
 [tools]
 ghq = "latest"
-just = "latest"
 zig = "0.16.0"
+
+[tasks.run]
+run = """
+zig build run --
+"""
+
+[tasks.build]
+run = """
+zig build -Doptimize=ReleaseSmall
+"""
+
+[tasks.format]
+run = """
+mise exec -- zig fmt src/ ./build.zig ./build.zig.zon examples/
+"""
+
+[tasks.clone-references]
+run = """
+#!/usr/bin/env sh
+GHQ_ROOT=.references
+ghq get github.com/zkat/miette -b v7.6.0
+"""
+
+[tasks.clean]
+run = """
+rm -rf zig-out .zig-cache
+"""
+
+[tasks.test]
+run = """
+zig build test
+"""

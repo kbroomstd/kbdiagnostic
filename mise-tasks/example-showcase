@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+#USAGE flag "--json"
+
+printf '%s\n' '=== zig-cli ==='
+if [ $"{usage_json:-false}" = "true" ]; then
+  (cd examples/diagnostic-showcase/zig-cli && zig build run -- --json)
+else
+  (cd examples/diagnostic-showcase/zig-cli && zig build run)
+fi
+printf '\n%s\n' '=== rust-cli ==='
+if [ $"{usage_json:-false}" = "true" ]; then
+  (cd examples/diagnostic-showcase/rust-cli && CARGO_NET_OFFLINE=true RUSTFLAGS=-Awarnings cargo run -q -- --json)
+else
+  (cd examples/diagnostic-showcase/rust-cli && CARGO_NET_OFFLINE=true RUSTFLAGS=-Awarnings cargo run -q)
+fi
+
+
