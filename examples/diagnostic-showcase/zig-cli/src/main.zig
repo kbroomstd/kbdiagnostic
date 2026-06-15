@@ -18,7 +18,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
 
-    const handler = if (use_json) (kb.JsonReportHandler{}).base else (kb.GraphicalReportHandler{}).base;
+    const handler = if (use_json) (kb.JsonReportHandler{}).base() else (kb.GraphicalReportHandler{}).base();
 
     const source_names = [_][]const u8{ "config.yaml", "handler.go", "query.sql", "pipeline.py", "template.tera" };
     var sources: [source_names.len]kb.NamedSource = undefined;
@@ -33,7 +33,7 @@ pub fn main(init: std.process.Init) !void {
     const out = &file_writer.interface;
 
     for (example_basic.all) |item| {
-        const d = item.diagnostic();
+        const d = item.implBy();
         try handler.display(arena, out, &d);
         if (!use_json) try out.writeByte('\n');
     }

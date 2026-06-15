@@ -1,5 +1,3 @@
-const GraphicalReportHandler = @This();
-
 const std = @import("std");
 const diag = @import("../diagnostic.zig");
 const sev = @import("../severity.zig");
@@ -7,9 +5,11 @@ const span = @import("../span.zig");
 const source = @import("../source.zig");
 const report = @import("../report.zig");
 
-base: report.ReportHandler = .{ .ptr = dummy_ptr, .vtable = &vtable },
+pub const GraphicalReportHandler = @This();
 
-const dummy_ptr: *const anyopaque = @ptrFromInt(1);
+pub fn base(self: *const @This()) report.ReportHandler {
+    return report.ReportHandler.implBy(self);
+}
 
 const chars = struct {
     const hbar = "─";
@@ -23,10 +23,6 @@ const chars = struct {
     const rcross = "┤";
     const underbar = "┬";
     const underline = "─";
-};
-
-const vtable = report.ReportHandler.VTable{
-    .display = display,
 };
 
 fn icon(s: ?sev.Severity) []const u8 {

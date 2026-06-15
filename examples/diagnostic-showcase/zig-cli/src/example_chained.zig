@@ -13,9 +13,9 @@ const Node = struct {
     related: ?[]const diagnostic.Diagnostic,
     diag_source: ?*const diagnostic.Diagnostic,
 
-    fn toDiagnostic(self: *const Node) diagnostic.Diagnostic {
-        return .{ .ptr = self, .vtable = &VTable };
-    }
+fn implBy(self: *const Node) diagnostic.Diagnostic {
+    return .{ .ptr = self, .vtable = &VTable };
+}
 
     fn codeFn(ptr: *const anyopaque) ?[]const u8 {
         return node(ptr).code;
@@ -355,7 +355,7 @@ pub fn build(alloc: std.mem.Allocator, sources: []const diagnostic.NamedSource) 
         };
     }
     for (nodes, diags) |*node, *diag| {
-        diag.* = node.toDiagnostic();
+    diag.* = node.implBy();
     }
 
     var total_related: usize = 0;

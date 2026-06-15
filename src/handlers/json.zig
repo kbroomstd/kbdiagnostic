@@ -4,14 +4,10 @@ const report = @import("../report.zig");
 const sev = @import("../severity.zig");
 const source = @import("../source.zig");
 
-const dummy_ptr: *const anyopaque = @ptrFromInt(1);
-
 pub const JsonReportHandler = struct {
-    base: report.ReportHandler = .{ .ptr = dummy_ptr, .vtable = &vtable },
-
-    const vtable = report.ReportHandler.VTable{
-        .display = display,
-    };
+    pub fn base(self: *const @This()) report.ReportHandler {
+        return report.ReportHandler.implBy(self);
+    }
 
     fn escape(writer: *std.Io.Writer, s: []const u8) std.Io.Writer.Error!void {
         for (s) |c| switch (c) {
@@ -145,7 +141,7 @@ test "json output" {
         };
     };
     const d = diag.Diagnostic{ .ptr = undefined, .vtable = &D.diag_vtable };
-    const handler = (JsonReportHandler{}).base;
+    const handler = (JsonReportHandler{}).base();
     var buf: [128]u8 = undefined;
     var writer = std.Io.Writer.fixed(&buf);
     try handler.display(std.testing.allocator, &writer, &d);

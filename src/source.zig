@@ -1,48 +1,74 @@
 const std = @import("std");
 const span = @import("span.zig");
 
-pub const SourceCode = struct {
-    ptr: *const anyopaque,
-    vtable: *const VTable,
+pub const SourceCode = @This();
+ptr: *const anyopaque,
+vtable: *const VTable,
 
-    pub const VTable = struct {
-        readSpan: *const fn (*const anyopaque, *const span.SourceSpan, usize, usize) anyerror!span.SpanContents,
-    };
-
-    pub fn readSpan(self: *const SourceCode, s: *const span.SourceSpan, before: usize, after: usize) anyerror!span.SpanContents {
-        return self.vtable.readSpan(self.ptr, s, before, after);
-    }
+pub const VTable = struct {
+    readSpan: *const fn (*const anyopaque, *const span.SourceSpan, usize, usize) anyerror!span.SpanContents,
 };
+
+pub fn implBy(impl_obj: anytype) SourceCode {
+    const delegate = SourceCodeDelegate(impl_obj);
+    return .{
+        .ptr = impl_obj,
+        .vtable = &.{
+            .readSpan = delegate.readSpan,
+        },
+    };
+}
+
+pub fn readSpan(self: *const SourceCode, s: *const span.SourceSpan, before: usize, after: usize) anyerror!span.SpanContents {
+    return self.vtable.readSpan(self.ptr, s, before, after);
+}
 
 pub const SliceSource = struct {
     data: []const u8,
+    pub fn implBy(self: *const SliceSource) SourceCode {
+        return SourceCode.implBy(self);
+    }
+
     pub fn source(self: *const SliceSource) SourceCode {
-        return .{ .ptr = self, .vtable = &slice_vtable };
+        return self.implBy();
+    }
+
+    fn readSpan(self: *const SliceSource, s: *const span.SourceSpan, _: usize, _: usize) anyerror!span.SpanContents {
+        return buildContents(self.data, null, s.*, null);
     }
 };
-
-fn sliceRead(ptr: *const anyopaque, s: *const span.SourceSpan, _: usize, _: usize) anyerror!span.SpanContents {
-    const self: *const SliceSource = @ptrCast(@alignCast(ptr));
-    return buildContents(self.data, null, s.*, null);
-}
-
-const slice_vtable = SourceCode.VTable{ .readSpan = sliceRead };
 
 pub const NamedSource = struct {
     name: []const u8,
     data: []const u8,
 
-    fn readSpan(ptr: *const anyopaque, s: *const span.SourceSpan, _: usize, _: usize) anyerror!span.SpanContents {
-        const self: *const @This() = @ptrCast(@alignCast(ptr));
+    fn readSpan(self: *const @This(), s: *const span.SourceSpan, _: usize, _: usize) anyerror!span.SpanContents {
         return buildContents(self.data, self.name, s.*, null);
     }
 
-    const vtable = SourceCode.VTable{ .readSpan = readSpan };
+    pub fn implBy(self: *const @This()) SourceCode {
+        return SourceCode.implBy(self);
+    }
 
     pub fn source(self: *const @This()) SourceCode {
-        return .{ .ptr = self, .vtable = &vtable };
+        return self.implBy();
     }
 };
+
+inline fn SourceCodeDelegate(impl_obj: anytype) type {
+    const ImplType = @TypeOf(impl_obj);
+    return struct {
+        fn readSpan(impl: *const anyopaque, s: *const span.SourceSpan, before: usize, after: usize) anyerror!span.SpanContents {
+            const obj = TPtr(ImplType, impl);
+            if (@hasDecl(ImplType, "readSpan")) return obj.readSpan(s, before, after);
+            return @field(obj, "readSpan")(s, before, after);
+        }
+    };
+}
+
+fn TPtr(T: type, opaque_ptr: *const anyopaque) T {
+    return @as(T, @ptrCast(@alignCast(opaque_ptr)));
+}
 
 fn buildContents(data: []const u8, name: ?[]const u8, sp: span.SourceSpan, language: ?[]const u8) span.SpanContents {
     var line: usize = 1;
