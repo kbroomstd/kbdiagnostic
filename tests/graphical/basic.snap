@@ -1,0 +1,9 @@
+toml::parse::invalid_integer
+
+  × invalid integer
+  ╭─[sample.toml:2:11]
+ 2 │ [db]
+ 3 │ port = 99999
+   │         ╰── invalid port
+  ╰────
+  help: use 16-bit or 32-bit integer

@@ -1,0 +1,9 @@
+toml::parse::document
+
+  × failed to parse document
+
+  ╰─▶  × duplicate key
+     ╭─[cause.toml:1:1]
+  1 │ key = 1
+    │ ─── bad key
+  ╰────

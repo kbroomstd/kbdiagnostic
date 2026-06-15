@@ -24,10 +24,11 @@ pub const VTable = struct {
 };
 
 inline fn ReportHandlerDelegate(impl_obj: anytype) type {
-    const ImplType = @TypeOf(impl_obj);
+    const ImplType = ImplChild(@TypeOf(impl_obj));
+    const ImplPtrType = @TypeOf(impl_obj);
     return struct {
         fn display(impl: *const anyopaque, allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "display")) return obj.display(allocator, writer, err);
             return @field(obj, "display")(allocator, writer, err);
         }
@@ -35,5 +36,12 @@ inline fn ReportHandlerDelegate(impl_obj: anytype) type {
 }
 
 fn TPtr(T: type, opaque_ptr: *const anyopaque) T {
-    return @as(T, @ptrCast(@alignCast(opaque_ptr)));
+    return @as(T, @ptrFromInt(@intFromPtr(opaque_ptr)));
+}
+
+fn ImplChild(T: type) type {
+    return switch (@typeInfo(T)) {
+        .pointer => |p| p.child,
+        else => T,
+    };
 }

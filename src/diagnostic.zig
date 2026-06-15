@@ -71,52 +71,52 @@ pub fn chain(self: *const Diagnostic) ?[]const Diagnostic {
 }
 
 inline fn DiagnosticDelegate(impl_obj: anytype) type {
-    const ImplType = @TypeOf(impl_obj);
+    const ImplType = ImplChild(@TypeOf(impl_obj));
+    const ImplPtrType = @TypeOf(impl_obj);
     return struct {
         fn code(impl: *const anyopaque) ?[]const u8 {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "code")) return obj.code();
             return @field(obj, "code");
         }
         fn severity(impl: *const anyopaque) ?sev.Severity {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "severity")) return obj.severity();
             return @field(obj, "severity");
         }
         fn help(impl: *const anyopaque) ?[]const u8 {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "help")) return obj.help();
             return @field(obj, "help");
         }
         fn url(impl: *const anyopaque) ?[]const u8 {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "url")) return obj.url();
-            return @field(obj, "url");
+            return null;
         }
         fn sourceCode(impl: *const anyopaque) ?*const source.SourceCode {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "sourceCode")) return obj.sourceCode();
             return @field(obj, "source");
         }
         fn labels(impl: *const anyopaque) ?[]const span.LabeledSpan {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "labels")) return obj.labels();
             const value = @field(obj, "labels");
             return if (value.len == 0) null else value;
         }
         fn related(impl: *const anyopaque) ?[]const Diagnostic {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "related")) return obj.related();
-            const value = @field(obj, "related");
-            return if (value.len == 0) null else value;
+            return null;
         }
         fn diagnosticSource(impl: *const anyopaque) ?*const Diagnostic {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "diagnosticSource")) return obj.diagnosticSource();
             return null;
         }
         fn message(impl: *const anyopaque) []const u8 {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "message")) return obj.message();
             return @field(obj, "message");
         }
@@ -124,7 +124,14 @@ inline fn DiagnosticDelegate(impl_obj: anytype) type {
 }
 
 fn TPtr(T: type, opaque_ptr: *const anyopaque) T {
-    return @as(T, @ptrCast(@alignCast(opaque_ptr)));
+    return @as(T, @ptrFromInt(@intFromPtr(opaque_ptr)));
+}
+
+fn ImplChild(T: type) type {
+    return switch (@typeInfo(T)) {
+        .pointer => |p| p.child,
+        else => T,
+    };
 }
 
 test "default trait methods return none" {

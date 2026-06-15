@@ -56,10 +56,11 @@ pub const NamedSource = struct {
 };
 
 inline fn SourceCodeDelegate(impl_obj: anytype) type {
-    const ImplType = @TypeOf(impl_obj);
+    const ImplType = ImplChild(@TypeOf(impl_obj));
+    const ImplPtrType = @TypeOf(impl_obj);
     return struct {
         fn readSpan(impl: *const anyopaque, s: *const span.SourceSpan, before: usize, after: usize) anyerror!span.SpanContents {
-            const obj = TPtr(ImplType, impl);
+            const obj = TPtr(ImplPtrType, impl);
             if (@hasDecl(ImplType, "readSpan")) return obj.readSpan(s, before, after);
             return @field(obj, "readSpan")(s, before, after);
         }
@@ -67,7 +68,14 @@ inline fn SourceCodeDelegate(impl_obj: anytype) type {
 }
 
 fn TPtr(T: type, opaque_ptr: *const anyopaque) T {
-    return @as(T, @ptrCast(@alignCast(opaque_ptr)));
+    return @as(T, @ptrFromInt(@intFromPtr(opaque_ptr)));
+}
+
+fn ImplChild(T: type) type {
+    return switch (@typeInfo(T)) {
+        .pointer => |p| p.child,
+        else => T,
+    };
 }
 
 fn buildContents(data: []const u8, name: ?[]const u8, sp: span.SourceSpan, language: ?[]const u8) span.SpanContents {
