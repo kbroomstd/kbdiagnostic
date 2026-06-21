@@ -41,7 +41,7 @@ fn sevName(s: ?sev.Severity) []const u8 {
     };
 }
 
-fn display(_: *const anyopaque, allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+pub fn display(_: *const @This(), allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
     try renderReportInner(allocator, writer, err, true, true, false);
 }
 

@@ -29,7 +29,7 @@ inline fn ReportHandlerDelegate(impl_obj: anytype) type {
     return struct {
         fn display(impl: *const anyopaque, allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
             const obj = TPtr(ImplPtrType, impl);
-            if (@hasDecl(ImplType, "display")) return obj.display(allocator, writer, err);
+            if (@hasDecl(ImplType, "display")) return @call(.auto, ImplType.display, .{ obj, allocator, writer, err });
             return @field(obj, "display")(allocator, writer, err);
         }
     };
