@@ -19,99 +19,99 @@ pub const SourceSpan = struct {
 };
 
 pub const LabeledSpan = struct {
-    _label: ?[]const u8,
-    _span: SourceSpan,
-    _primary: bool,
+    label_: ?[]const u8,
+    span_: SourceSpan,
+    primary_: bool,
 
     pub fn new(lbl: ?[]const u8, off: usize, length: usize) LabeledSpan {
-        return .{ ._label = lbl, ._span = .{ .offset = off, .length = length }, ._primary = false };
+        return .{ .label_ = lbl, .span_ = .{ .offset = off, .length = length }, .primary_ = false };
     }
 
     pub fn newPrimary(lbl: ?[]const u8, off: usize, length: usize) LabeledSpan {
-        return .{ ._label = lbl, ._span = .{ .offset = off, .length = length }, ._primary = true };
+        return .{ .label_ = lbl, .span_ = .{ .offset = off, .length = length }, .primary_ = true };
     }
     pub fn newWithSpan(lbl: ?[]const u8, sp: SourceSpan) LabeledSpan {
-        return .{ ._label = lbl, ._span = sp, ._primary = false };
+        return .{ .label_ = lbl, .span_ = sp, .primary_ = false };
     }
     pub fn newPrimaryWithSpan(lbl: ?[]const u8, sp: SourceSpan) LabeledSpan {
-        return .{ ._label = lbl, ._span = sp, ._primary = true };
+        return .{ .label_ = lbl, .span_ = sp, .primary_ = true };
     }
     pub fn at(sp: SourceSpan, lbl: []const u8) LabeledSpan {
-        return .{ ._label = lbl, ._span = sp, ._primary = false };
+        return .{ .label_ = lbl, .span_ = sp, .primary_ = false };
     }
     pub fn atOffset(off: usize, lbl: []const u8) LabeledSpan {
-        return .{ ._label = lbl, ._span = .{ .offset = off, .length = 1 }, ._primary = false };
+        return .{ .label_ = lbl, .span_ = .{ .offset = off, .length = 1 }, .primary_ = false };
     }
     pub fn underline(span: SourceSpan) LabeledSpan {
-        return .{ ._label = null, ._span = span, ._primary = true };
+        return .{ .label_ = null, .span_ = span, .primary_ = true };
     }
     pub fn label(self: *const LabeledSpan) ?[]const u8 {
-        return self._label;
+        return self.label_;
     }
     pub fn inner(self: *const LabeledSpan) *const SourceSpan {
-        return &self._span;
+        return &self.span_;
     }
     pub fn offset(self: *const LabeledSpan) usize {
-        return self._span.offset;
+        return self.span_.offset;
     }
     pub fn len(self: *const LabeledSpan) usize {
-        return self._span.length;
+        return self.span_.length;
     }
     pub fn isEmpty(self: *const LabeledSpan) bool {
-        return self._span.length == 0;
+        return self.span_.length == 0;
     }
     pub fn primary(self: *const LabeledSpan) bool {
-        return self._primary;
+        return self.primary_;
     }
 
     pub fn jsonStringify(self: LabeledSpan, jw: anytype) !void {
         try jw.beginObject();
-        if (self._label) |lbl| {
+        if (self.label_) |lbl| {
             try jw.objectField("label");
             try jw.write(lbl);
         }
         try jw.objectField("span");
-        try jw.write(self._span);
+        try jw.write(self.span_);
         try jw.objectField("primary");
-        try jw.write(self._primary);
+        try jw.write(self.primary_);
         try jw.endObject();
     }
 
     pub fn format(self: LabeledSpan, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        if (self._label) |lbl| try writer.print("{s}@{any}", .{ lbl, self._span }) else try writer.print("@{any}", .{self._span});
-        if (self._primary) try writer.writeAll(" primary");
+        if (self.label_) |lbl| try writer.print("{s}@{any}", .{ lbl, self.span_ }) else try writer.print("@{any}", .{self.span_});
+        if (self.primary_) try writer.writeAll(" primary");
     }
 };
 
 pub const SpanContents = struct {
-    _data: []const u8,
-    _span: SourceSpan,
-    _name: ?[]const u8 = null,
-    _line: usize = 1,
-    _column: usize = 1,
-    _line_count: usize = 1,
-    _language: ?[]const u8 = null,
+    data_: []const u8,
+    span_: SourceSpan,
+    name_: ?[]const u8 = null,
+    line_: usize = 1,
+    column_: usize = 1,
+    line_count_: usize = 1,
+    language_: ?[]const u8 = null,
 
     pub fn data(self: *const SpanContents) []const u8 {
-        return self._data;
+        return self.data_;
     }
     pub fn span(self: *const SpanContents) *const SourceSpan {
-        return &self._span;
+        return &self.span_;
     }
     pub fn name(self: *const SpanContents) ?[]const u8 {
-        return self._name;
+        return self.name_;
     }
     pub fn line(self: *const SpanContents) usize {
-        return self._line;
+        return self.line_;
     }
     pub fn column(self: *const SpanContents) usize {
-        return self._column;
+        return self.column_;
     }
     pub fn lineCount(self: *const SpanContents) usize {
-        return self._line_count;
+        return self.line_count_;
     }
     pub fn language(self: *const SpanContents) ?[]const u8 {
-        return self._language;
+        return self.language_;
     }
 };
 

@@ -5,7 +5,8 @@ const sev = @import("../severity.zig");
 const source = @import("../source.zig");
 
 pub const JsonReportHandler = struct {
-    pub fn base(self: *const @This()) report.ReportHandler {
+    const Self = @This();
+    pub fn base(self: *const Self) report.ReportHandler {
         return report.ReportHandler.implBy(self);
     }
 

@@ -39,18 +39,19 @@ pub const SliceSource = struct {
 };
 
 pub const NamedSource = struct {
+    const Self = @This();
     name: []const u8,
     data: []const u8,
 
-    fn readSpan(self: *const @This(), s: *const span.SourceSpan, _: usize, _: usize) anyerror!span.SpanContents {
+    fn readSpan(self: *const Self, s: *const span.SourceSpan, _: usize, _: usize) anyerror!span.SpanContents {
         return buildContents(self.data, self.name, s.*, null);
     }
 
-    pub fn implBy(self: *const @This()) SourceCode {
+    pub fn implBy(self: *const Self) SourceCode {
         return SourceCode.implBy(self);
     }
 
-    pub fn source(self: *const @This()) SourceCode {
+    pub fn source(self: *const Self) SourceCode {
         return self.implBy();
     }
 };
@@ -96,7 +97,7 @@ fn buildContents(data: []const u8, name: ?[]const u8, sp: span.SourceSpan, langu
     while (j < end) : (j += 1) {
         if (data[j] == '\n') line_count += 1;
     }
-    return .{ ._data = data, ._span = sp, ._name = name, ._line = line, ._column = column, ._line_count = line_count, ._language = language };
+    return .{ .data_ = data, .span_ = sp, .name_ = name, .line_ = line, .column_ = column, .line_count_ = line_count, .language_ = language };
 }
 
 test "source missing and multiline" {

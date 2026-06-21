@@ -6,8 +6,8 @@ const source = @import("../source.zig");
 const report = @import("../report.zig");
 
 pub const GraphicalReportHandler = @This();
-
-pub fn base(self: *const @This()) report.ReportHandler {
+const Self = @This();
+pub fn base(self: *const Self) report.ReportHandler {
     return report.ReportHandler.implBy(self);
 }
 
@@ -41,7 +41,7 @@ fn sevName(s: ?sev.Severity) []const u8 {
     };
 }
 
-pub fn display(_: *const @This(), allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
+pub fn display(_: *const Self, allocator: std.mem.Allocator, writer: *std.Io.Writer, err: *const diag.Diagnostic) std.Io.Writer.Error!void {
     try renderReportInner(allocator, writer, err, true, true, false);
 }
 
